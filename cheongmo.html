@@ -141,7 +141,26 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 .btn-save:hover { background:var(--accent); }
 .btn-cancel { flex:0 0 auto; background:none; border:1px solid var(--border); color:var(--muted); font-family:'Noto Sans KR',sans-serif; font-size:13px; padding:11px 18px; border-radius:2px; cursor:pointer; }
 
-.empty { padding:50px 20px; text-align:center; color:var(--muted); font-size:13px; }
+/* CALENDAR */
+.cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.cal-month-label { font-family:'Noto Serif KR',serif; font-size:18px; font-weight:300; color:var(--text); }
+.cal-arrow { background:none; border:1px solid var(--border); border-radius:2px; width:34px; height:34px; font-size:18px; color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.cal-arrow:hover { border-color:var(--accent); color:var(--accent); }
+.cal-grid { background:var(--surface); border:1px solid var(--border); border-radius:3px; overflow:hidden; }
+.cal-dow { display:grid; grid-template-columns:repeat(7,1fr); background:var(--text); }
+.cal-dow span { text-align:center; padding:8px 0; font-size:10px; color:var(--accent2); letter-spacing:1px; }
+.cal-days { display:grid; grid-template-columns:repeat(7,1fr); }
+.cal-day { min-height:56px; border-right:1px solid var(--border); border-bottom:1px solid var(--border); padding:6px 7px; position:relative; }
+.cal-day:nth-child(7n) { border-right:none; }
+.cal-day.other-month { background:var(--bg); }
+.cal-day.today { background:var(--accent-light); }
+.cal-day-num { font-size:12px; color:var(--muted); margin-bottom:3px; }
+.cal-day.today .cal-day-num { color:var(--accent); font-weight:500; }
+.cal-dot { font-size:10px; background:var(--accent); color:white; border-radius:3px; padding:1px 5px; margin-bottom:2px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; display:block; }
+.cal-dot:hover { background:var(--text); }
+.cal-dot.yn-o-dot { background:var(--green); }
+.cal-dot.yn-x-dot { background:var(--accent); }
+
 .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(60px); background:var(--text); color:#f8f5f0; padding:10px 22px; border-radius:2px; font-size:13px; transition:transform .3s; z-index:999; pointer-events:none; }
 .toast.show { transform:translateX(-50%) translateY(0); }
 
@@ -164,7 +183,8 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 <nav class="nav">
   <button class="nav-btn active" onclick="showTab('summary',this)">요약</button>
   <button class="nav-btn" onclick="showTab('list',this)">모임 목록</button>
-  <button class="nav-btn" onclick="showTab('people',this)">인원 관리</button>
+  <button class="nav-btn" onclick="showTab('calendar',this)">캘린더</button>
+  <button class="nav-btn" onclick="showTab('people',this)">인원</button>
   <button class="nav-btn" onclick="showTab('add',this)">+ 추가</button>
 </nav>
 
@@ -197,11 +217,20 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
       <button class="filter-btn active" onclick="setListFilter('all',this)">전체</button>
       <button class="filter-btn" onclick="setListFilter('O',this)">은선 참석</button>
       <button class="filter-btn" onclick="setListFilter('X',this)">은선 미참석</button>
-      <button class="filter-btn" onclick="setListFilter('amt',this)">금액 있는것만</button>
     </div>
-    <div class="toolbar" id="peopleFilterBar" style="margin-top:-8px"></div>
     <div id="meetingList"></div>
     <div class="empty" id="listEmpty" style="display:none">해당하는 내역이 없습니다</div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="section" id="tab-calendar">
+    <div class="cal-nav">
+      <button class="cal-arrow" onclick="calPrev()">‹</button>
+      <div class="cal-month-label" id="calMonthLabel"></div>
+      <button class="cal-arrow" onclick="calNext()">›</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div id="calDetail" style="display:none;margin-top:14px"></div>
   </div>
 
   <!-- PEOPLE -->
@@ -405,6 +434,7 @@ function showTab(name, btn) {
   if (name==='summary') renderSummary();
   if (name==='list') renderList();
   if (name==='people') renderPeople();
+  if (name==='calendar') renderCalendar();
   if (name==='add') renderAddCheckboxes('f-checkboxes', []);
 }
 
@@ -472,23 +502,40 @@ function renderMeetingCard(m, isRecent=false) {
   const names=m.personIds.map(id=>getPersonName(id));
   const extras=m.extraPeople?m.extraPeople.split(/[,，]/).map(s=>s.trim()).filter(Boolean):[];
   const allNames=[...names,...extras];
-  const tagHtml = allNames.map((n,i)=>`<span class="person-tag${i>=names.length?' extra':''}">${n}</span>`).join('');
   const payHtml=(m.payments||[]).filter(p=>p.place||p.amount).map(p=>`
     <div class="payment-row">
       <span class="payment-place">${p.place||'—'}</span>
       ${p.memo?`<span class="payment-memo">${p.memo}</span>`:''}
       <span class="payment-amt">${p.amount?p.amount.toLocaleString()+'원':'—'}</span>
     </div>`).join('');
+  const avgPerPerson = (total && allNames.length) ? Math.round(total/allNames.length) : 0;
+
+  // 진행/미진행 뱃지
+  const today = new Date(); today.setHours(0,0,0,0);
+  const mDate = m.date ? new Date(m.date) : null;
+  const doneBadge = mDate
+    ? (mDate < today
+        ? '<span style="font-size:10px;background:#e8f0f5;color:#4a6b8a;padding:2px 9px;border-radius:10px">진행</span>'
+        : '<span style="font-size:10px;background:var(--surface2);color:var(--muted);padding:2px 9px;border-radius:10px">미진행</span>')
+    : '<span style="font-size:10px;background:var(--surface2);color:var(--muted);padding:2px 9px;border-radius:10px">미진행</span>';
+
+  // 참석자 요약 (이름은 표시하되 태그 형태 아닌 텍스트)
+  const peopleText = allNames.length ? allNames.join(', ') : '참석자 없음';
+
   return `<div class="meeting-card" onclick="openEdit(${m.id})">
     <div class="meeting-header">
       <div class="meeting-left">
         <div class="meeting-date">${fmtDate(m.date)}</div>
-        <div class="people-tags" style="margin-bottom:2px">${tagHtml||'<span class="person-tag extra">참석자 없음</span>'}</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:2px">${peopleText}</div>
       </div>
-      <div class="meeting-right">
-        ${total?`<div class="meeting-total">${total.toLocaleString()}원</div>`:''}
-        ${ynBadge(m.yn)}
-        ${!isRecent?`<button class="btn-del-sm" onclick="event.stopPropagation();delMeeting(${m.id})">삭제</button>`:''}
+      <div class="meeting-right" style="flex-direction:column;align-items:flex-end;gap:5px">
+        <div style="display:flex;align-items:center;gap:6px">
+          ${doneBadge}
+          ${ynBadge(m.yn)}
+          ${!isRecent?`<button class="btn-del-sm" onclick="event.stopPropagation();delMeeting(${m.id})">삭제</button>`:''}
+        </div>
+        ${total?`<div style="font-family:'Noto Serif KR',serif;font-size:16px;color:var(--accent)">${total.toLocaleString()}원${avgPerPerson?`<span style="font-size:11px;color:var(--muted);font-family:'Noto Sans KR',sans-serif;margin-left:6px">인당 ~${avgPerPerson.toLocaleString()}</span>`:''}
+        </div>`:''}
       </div>
     </div>
     ${payHtml?`<div class="payment-list">${payHtml}</div>`:''}
@@ -513,26 +560,6 @@ function renderSummary() {
 }
 
 // ── LIST ──
-let curPersonFilter = null; // null = 전체, pid = 특정 인원
-
-function renderPeopleFilterBar() {
-  const bar = document.getElementById('peopleFilterBar');
-  if (!bar) return;
-  bar.innerHTML = people.map(p =>
-    `<button class="filter-btn${curPersonFilter===p.id?' active':''}" onclick="setPersonFilter(${p.id},this)">${p.name}</button>`
-  ).join('');
-}
-
-function setPersonFilter(pid, btn) {
-  if (curPersonFilter === pid) {
-    curPersonFilter = null;
-  } else {
-    curPersonFilter = pid;
-  }
-  renderPeopleFilterBar();
-  renderList();
-}
-
 function setListFilter(f,btn) {
   curListFilter=f;
   document.querySelectorAll('#listFilterBar .filter-btn').forEach(b=>b.classList.remove('active'));
@@ -540,7 +567,6 @@ function setListFilter(f,btn) {
   renderList();
 }
 function renderList() {
-  renderPeopleFilterBar();
   const total=meetings.reduce((s,m)=>s+totalAmt(m),0);
   const attendO=meetings.filter(m=>m.yn==='O').length;
   document.getElementById('lt-total').textContent=total.toLocaleString()+' 원';
@@ -549,8 +575,6 @@ function renderList() {
   let f=meetings;
   if (curListFilter==='O') f=f.filter(m=>m.yn==='O');
   else if (curListFilter==='X') f=f.filter(m=>m.yn==='X');
-  else if (curListFilter==='amt') f=f.filter(m=>totalAmt(m)>0);
-  if (curPersonFilter !== null) f=f.filter(m=>(m.personIds||[]).includes(curPersonFilter));
   const sorted=[...f].sort((a,b)=>new Date(b.date)-new Date(a.date));
   const em=document.getElementById('listEmpty'), list=document.getElementById('meetingList');
   if (!sorted.length) { list.innerHTML=''; em.style.display='block'; return; }
@@ -679,6 +703,75 @@ function saveEdit() {
   toast('✓ 수정되었습니다');
 }
 document.getElementById('editModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+// ── CALENDAR ──
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+
+function calPrev() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function calNext() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+
+function renderCalendar() {
+  const months=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  document.getElementById('calMonthLabel').textContent = `${calYear}년 ${months[calMonth]}`;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+
+  // 이 달 모임 날짜 맵
+  const meetingMap = {};
+  meetings.forEach(m => {
+    if (!m.date) return;
+    const d = new Date(m.date);
+    if (d.getFullYear()===calYear && d.getMonth()===calMonth) {
+      const key = d.getDate();
+      (meetingMap[key]=meetingMap[key]||[]).push(m);
+    }
+  });
+
+  let html = `<div class="cal-dow">
+    <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+  </div><div class="cal-days">`;
+
+  // 이전 달
+  for (let i=firstDay-1; i>=0; i--) {
+    html+=`<div class="cal-day other-month"><div class="cal-day-num" style="color:var(--muted2)">${daysInPrev-i}</div></div>`;
+  }
+  // 이번 달
+  for (let d=1; d<=daysInMonth; d++) {
+    const isToday = (new Date(calYear,calMonth,d).getTime()===today.getTime());
+    const ms = meetingMap[d]||[];
+    const dotsHtml = ms.map(m=>{
+      const names=(m.personIds||[]).map(id=>getPersonName(id));
+      const extras=m.extraPeople?m.extraPeople.split(/[,，]/).map(s=>s.trim()).filter(Boolean):[];
+      const label=[...names,...extras].slice(0,2).join(', ')+(([...names,...extras].length>2)?'…':'');
+      return `<span class="cal-dot ${m.yn==='O'?'yn-o-dot':'yn-x-dot'}" onclick="event.stopPropagation();showCalDetail(${m.id})">${label||'모임'}</span>`;
+    }).join('');
+    html+=`<div class="cal-day${isToday?' today':''}">
+      <div class="cal-day-num">${d}</div>
+      ${dotsHtml}
+    </div>`;
+  }
+  // 다음 달 채우기
+  const total = firstDay + daysInMonth;
+  const remaining = total%7===0?0:7-(total%7);
+  for (let d=1; d<=remaining; d++) {
+    html+=`<div class="cal-day other-month"><div class="cal-day-num" style="color:var(--muted2)">${d}</div></div>`;
+  }
+  html+='</div>';
+  document.getElementById('calGrid').innerHTML=html;
+  document.getElementById('calDetail').style.display='none';
+}
+
+function showCalDetail(mid) {
+  const m = meetings.find(x=>x.id===mid);
+  if (!m) return;
+  const el = document.getElementById('calDetail');
+  el.style.display='block';
+  el.innerHTML=renderMeetingCard(m,true);
+}
 
 // ── INIT ──
 document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
