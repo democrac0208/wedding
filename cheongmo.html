@@ -320,32 +320,67 @@ let meetings = [];
 let curYN = '', modalYN = '', curListFilter = 'all', payCounter = 0;
 
 const SEED_PEOPLE = [
-  {name:'최강식', group:'건국대'}, {name:'김도형', group:'건국대'},
-  {name:'이학준', group:'건국대'}, {name:'박경준', group:'노경기획'},
-  {name:'박형두', group:'25기'}, {name:'김선재', group:'25기'},
-  {name:'백구름', group:'25기'}, {name:'홍지수', group:'25기'},
-  {name:'정원보', group:'신촌교회'}, {name:'이신우', group:'비알'},
-  {name:'권희범', group:'전 유플'}, {name:'송승호', group:'친구'},
+  {name:'이동환', group:'옥동초'},
+  {name:'장민철', group:'친구'},
+  {name:'김현국', group:'신정고'},
+  {name:'이해륜', group:'신정고'},
+  {name:'박지민', group:'건국대'},
+  {name:'김두영', group:'건국대'},
+  {name:'최강식', group:'건국대'},
+  {name:'김도형', group:'건국대'},
+  {name:'이학준', group:'건국대'},
+  {name:'박현재', group:'건국대'},
+  {name:'안상우', group:'건국대'},
+  {name:'고상우', group:'건국대'},
+  {name:'송승호', group:'건국대'},
+  {name:'김선재', group:'25기'},
+  {name:'박형두', group:'25기'},
+  {name:'백구름', group:'25기'},
+  {name:'홍지수', group:'25기'},
+  {name:'안혜지', group:'25기'},
+  {name:'김미림', group:'25기'},
+  {name:'임혜인', group:'25기'},
+  {name:'김동우', group:'25기'},
+  {name:'김광우', group:'25기'},
+  {name:'최혜윤', group:'셀'},
+  {name:'윤희원', group:'셀'},
+  {name:'김은빈', group:'셀'},
+  {name:'곽병억', group:'셀'},
+  {name:'박지혜', group:'셀'},
+  {name:'배성범', group:'셀'},
+  {name:'전성진', group:'셀'},
+  {name:'정인경', group:'셀'},
+  {name:'정원보', group:'신촌교회'},
+  {name:'이재람', group:'신촌교회'},
+  {name:'이운현', group:'신정중'},
+  {name:'정두혁', group:'신정중'},
+  {name:'최정현', group:'신정중'},
+  {name:'조민욱', group:'제니엘'},
+  {name:'이성세', group:'비알'},
+  {name:'이신우', group:'비알'},
+  {name:'권희범', group:'전 유플'},
+  {name:'전영식', group:'전 유플'},
+  {name:'김호진', group:'엘지'},
 ];
 const SEED_MEETINGS = [
-  { date:'2026-03-20', personIds:[0,1,2], extraPeople:'', yn:'X',
+  { date:'2026-03-20', personIds:[6,7,8], extraPeople:'', yn:'X',
     payments:[{place:'만선항조개집 숙대입구점',amount:147000,memo:''},{place:'롯데슈퍼 원효로점',amount:34300,memo:''}]},
-  { date:'2026-04-16', personIds:[3], extraPeople:'현지씨', yn:'O',
+  { date:'2026-04-16', personIds:[], extraPeople:'박경준, 현지씨', yn:'O',
     payments:[{place:'고청담 용산점',amount:487000,memo:'상품권 300000'}]},
-  { date:'2026-04-21', personIds:[8], extraPeople:'', yn:'O',
+  { date:'2026-04-21', personIds:[30], extraPeople:'', yn:'O',
     payments:[{place:'신류 용산점',amount:0,memo:''}]},
-  { date:'2026-04-24', personIds:[4,5,6,7], extraPeople:'', yn:'X', payments:[]},
+  { date:'2026-04-24', personIds:[13,14,15,16], extraPeople:'', yn:'X', payments:[]},
   { date:'2026-04-27', personIds:[], extraPeople:'은선이 친구분들', yn:'O',
     payments:[{place:'돕한',amount:0,memo:''}]},
-  { date:'2026-04-28', personIds:[9,10], extraPeople:'', yn:'X',
+  { date:'2026-04-28', personIds:[37,38], extraPeople:'', yn:'X',
     payments:[{place:'남해바다',amount:0,memo:''}]},
-  { date:'2026-04-30', personIds:[11], extraPeople:'', yn:'X',
+  { date:'2026-04-30', personIds:[12], extraPeople:'', yn:'X',
     payments:[{place:'쿠마 여의도점',amount:0,memo:''}]},
 ];
 
 function load() {
-  const sp = localStorage.getItem('cm_people_v1');
-  const sm = localStorage.getItem('cm_meetings_v1');
+  const sp = localStorage.getItem('cm_people_v2');
+  const sm = localStorage.getItem('cm_meetings_v2');
   if (sp && sm) { people=JSON.parse(sp); meetings=JSON.parse(sm); return; }
   let pid=1, mid=1;
   people = SEED_PEOPLE.map(p=>({...p, id:pid++}));
@@ -354,8 +389,8 @@ function load() {
   }));
   savePeople(); saveMeetings();
 }
-function savePeople() { localStorage.setItem('cm_people_v1', JSON.stringify(people)); }
-function saveMeetings() { localStorage.setItem('cm_meetings_v1', JSON.stringify(meetings)); }
+function savePeople() { localStorage.setItem('cm_people_v2', JSON.stringify(people)); }
+function saveMeetings() { localStorage.setItem('cm_meetings_v2', JSON.stringify(meetings)); }
 function totalAmt(m) { return (m.payments||[]).reduce((s,p)=>s+(p.amount||0),0); }
 function fmtDate(d) { return d?d.slice(2).replace(/-/g,'.'):'—'; }
 function fmt(n) { return n?n.toLocaleString('ko-KR'):'0'; }
