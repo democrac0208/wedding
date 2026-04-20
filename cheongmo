@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>청모 기록</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:#f8f5f0; --surface:#fff; --surface2:#f2ede6;
+  --border:#e8e0d4; --text:#2c2420; --muted:#9a8e84;
+  --accent:#8b6f5e; --accent2:#c4a882; --accent-light:#f0e8de;
+  --red:#c0392b; --green:#2d7a4a;
+}
+body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; font-size:14px; }
+
+.header { background:var(--text); padding:24px 24px 20px; text-align:center; }
+.header-sub { font-size:10px; color:var(--accent2); letter-spacing:4px; text-transform:uppercase; margin-bottom:6px; }
+.header h1 { font-family:'Noto Serif KR',serif; font-size:24px; font-weight:300; color:#f8f5f0; letter-spacing:3px; }
+
+.nav { display:flex; background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
+.nav-btn { flex:1; padding:12px 4px; background:none; border:none; color:var(--muted); font-family:'Noto Sans KR',sans-serif; font-size:11px; cursor:pointer; letter-spacing:.5px; border-bottom:2px solid transparent; transition:all .2s; }
+.nav-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+.container { max-width:800px; margin:0 auto; padding:20px 16px 80px; }
+.section { display:none; } .section.active { display:block; }
+
+/* CARDS */
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:12px; }
+.grid2 { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:12px; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:3px; padding:14px 16px; }
+.card-label { font-size:10px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:5px; }
+.card-value { font-family:'Noto Serif KR',serif; font-size:22px; color:var(--text); line-height:1; }
+.card-sub { font-size:11px; color:var(--muted); margin-top:3px; }
+.card-value.accent { color:var(--accent); }
+
+/* TOTALS BAR */
+.totals-bar { background:var(--text); border-radius:3px; padding:12px 18px; margin-bottom:14px; display:flex; gap:20px; flex-wrap:wrap; }
+.tb-item .lbl { font-size:10px; color:var(--accent2); letter-spacing:1px; text-transform:uppercase; margin-bottom:2px; }
+.tb-item .val { font-family:'Noto Serif KR',serif; font-size:17px; color:#f8f5f0; }
+
+/* FILTER / TOOLBAR */
+.toolbar { display:flex; gap:7px; margin-bottom:14px; flex-wrap:wrap; }
+.filter-btn { background:var(--surface); border:1px solid var(--border); color:var(--muted); font-family:'Noto Sans KR',sans-serif; font-size:11px; padding:5px 12px; border-radius:20px; cursor:pointer; transition:all .2s; }
+.filter-btn.active { background:var(--accent); border-color:var(--accent); color:white; }
+
+/* MEETING CARDS */
+.meeting-card { background:var(--surface); border:1px solid var(--border); border-radius:3px; margin-bottom:10px; overflow:hidden; cursor:pointer; transition:box-shadow .15s; }
+.meeting-card:hover { box-shadow:0 2px 8px rgba(0,0,0,.08); }
+.meeting-header { padding:13px 16px; display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.meeting-left { flex:1; min-width:0; }
+.meeting-date { font-size:11px; color:var(--muted); margin-bottom:3px; }
+.meeting-people { font-size:13px; font-weight:500; margin-bottom:4px; }
+.people-tags { display:flex; flex-wrap:wrap; gap:4px; }
+.person-tag { font-size:10px; background:var(--accent-light); color:var(--accent); padding:2px 8px; border-radius:10px; }
+.person-tag.extra { background:var(--surface2); color:var(--muted); }
+.meeting-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.meeting-total { font-family:'Noto Serif KR',serif; font-size:16px; color:var(--accent); }
+.yn-o { display:inline-block; background:#e8f5ec; color:var(--green); font-size:11px; font-weight:500; padding:2px 9px; border-radius:10px; }
+.yn-x { display:inline-block; background:#f5e8e8; color:var(--red); font-size:11px; font-weight:500; padding:2px 9px; border-radius:10px; }
+.btn-del-sm { background:none; border:1px solid var(--border); color:var(--muted); font-size:11px; padding:3px 8px; border-radius:2px; cursor:pointer; }
+.btn-del-sm:hover { border-color:var(--red); color:var(--red); }
+
+.payment-list { border-top:1px solid var(--border); }
+.payment-row { display:flex; justify-content:space-between; align-items:center; padding:8px 16px; border-bottom:1px dashed var(--border); font-size:13px; background:var(--bg); }
+.payment-row:last-child { border-bottom:none; }
+.payment-place { flex:1; }
+.payment-memo { font-size:11px; color:var(--muted); margin-left:6px; }
+.payment-amt { font-family:'Noto Serif KR',serif; font-size:14px; color:var(--accent); white-space:nowrap; margin-left:12px; }
+
+/* PEOPLE TAB */
+.section-title { font-size:10px; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:10px; }
+.people-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; margin-bottom:20px; }
+.person-card { background:var(--surface); border:1px solid var(--border); border-radius:3px; padding:14px; cursor:pointer; transition:all .15s; position:relative; }
+.person-card:hover { border-color:var(--accent); box-shadow:0 2px 8px rgba(0,0,0,.08); }
+.person-card.selected { border-color:var(--accent); background:var(--accent-light); }
+.person-name-big { font-size:15px; font-weight:500; margin-bottom:3px; }
+.person-group { font-size:11px; color:var(--muted); margin-bottom:8px; }
+.person-stats { display:flex; gap:10px; }
+.person-stat { font-size:11px; color:var(--muted); }
+.person-stat strong { font-family:'Noto Serif KR',serif; font-size:14px; color:var(--accent); display:block; }
+.person-del-btn { position:absolute; top:8px; right:8px; background:none; border:none; color:var(--muted2); font-size:14px; cursor:pointer; opacity:0; transition:opacity .15s; }
+.person-card:hover .person-del-btn { opacity:1; }
+.person-del-btn:hover { color:var(--red); }
+
+.add-person-form { background:var(--surface); border:1px solid var(--border); border-radius:3px; padding:16px; margin-bottom:16px; display:flex; gap:10px; flex-wrap:wrap; }
+.add-person-form input { flex:1; min-width:100px; background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:8px 12px; color:var(--text); font-family:'Noto Sans KR',sans-serif; font-size:13px; outline:none; }
+.add-person-form input:focus { border-color:var(--accent); }
+.btn-add-person { background:var(--text); border:none; color:#f8f5f0; font-family:'Noto Sans KR',sans-serif; font-size:12px; padding:8px 16px; border-radius:2px; cursor:pointer; white-space:nowrap; }
+.btn-add-person:hover { background:var(--accent); }
+
+/* PERSON DETAIL */
+.person-detail-header { background:var(--surface); border:1px solid var(--border); border-radius:3px; padding:16px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; }
+.btn-back { background:none; border:1px solid var(--border); color:var(--muted); font-family:'Noto Sans KR',sans-serif; font-size:12px; padding:6px 14px; border-radius:2px; cursor:pointer; }
+.btn-back:hover { border-color:var(--accent); color:var(--accent); }
+
+/* FORM */
+.form-card { background:var(--surface); border:1px solid var(--border); border-radius:3px; padding:24px; }
+.form-title { font-family:'Noto Serif KR',serif; font-size:18px; font-weight:300; color:var(--text); margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-field { display:flex; flex-direction:column; gap:5px; margin-bottom:12px; }
+.form-field label { font-size:10px; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; }
+.form-field input { background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:9px 12px; color:var(--text); font-family:'Noto Sans KR',sans-serif; font-size:13px; outline:none; transition:border-color .2s; width:100%; }
+.form-field input:focus { border-color:var(--accent); }
+
+.yn-toggle { display:flex; gap:8px; }
+.yn-btn { flex:1; padding:9px; border:1px solid var(--border); border-radius:2px; background:var(--bg); font-family:'Noto Sans KR',sans-serif; font-size:13px; cursor:pointer; transition:all .2s; text-align:center; }
+.yn-btn.active-o { background:#e8f5ec; border-color:var(--green); color:var(--green); font-weight:500; }
+.yn-btn.active-x { background:#f5e8e8; border-color:var(--red); color:var(--red); font-weight:500; }
+
+/* 참석자 선택 */
+.people-select-wrap { background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:12px; margin-bottom:12px; }
+.people-checkboxes { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+.person-check-label { display:flex; align-items:center; gap:5px; cursor:pointer; font-size:13px; background:var(--surface); border:1px solid var(--border); padding:5px 12px; border-radius:20px; transition:all .2s; }
+.person-check-label input { display:none; }
+.person-check-label.checked { background:var(--accent-light); border-color:var(--accent); color:var(--accent); }
+.extra-people-input { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:8px 12px; color:var(--text); font-family:'Noto Sans KR',sans-serif; font-size:12px; outline:none; }
+.extra-people-input:focus { border-color:var(--accent); }
+
+.pay-items { display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
+.pay-item-row { display:grid; grid-template-columns:1fr 110px 90px auto; gap:8px; align-items:center; }
+.pay-item-row input { background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:8px 10px; color:var(--text); font-family:'Noto Sans KR',sans-serif; font-size:12px; outline:none; width:100%; }
+.pay-item-row input:focus { border-color:var(--accent); }
+.btn-add-pay { background:none; border:1px dashed var(--border); color:var(--muted); padding:7px 14px; border-radius:2px; cursor:pointer; font-size:11px; font-family:'Noto Sans KR',sans-serif; transition:all .2s; width:100%; margin-bottom:12px; }
+.btn-add-pay:hover { border-color:var(--accent); color:var(--accent); }
+.btn-del-row { background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:2px 6px; }
+.btn-del-row:hover { color:var(--red); }
+
+.btn-submit { width:100%; background:var(--text); border:none; color:#f8f5f0; font-family:'Noto Sans KR',sans-serif; font-size:13px; font-weight:500; padding:13px; border-radius:2px; cursor:pointer; letter-spacing:2px; transition:background .2s; margin-top:4px; }
+.btn-submit:hover { background:var(--accent); }
+
+/* MODAL */
+.modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:200; align-items:center; justify-content:center; padding:16px; }
+.modal-backdrop.open { display:flex; }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:3px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; padding:24px; }
+.modal-title { font-family:'Noto Serif KR',serif; font-size:18px; font-weight:300; color:var(--text); margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.modal-close { background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; }
+.modal-actions { display:flex; gap:10px; margin-top:16px; }
+.btn-save { flex:1; background:var(--text); border:none; color:#f8f5f0; font-family:'Noto Sans KR',sans-serif; font-size:13px; font-weight:500; padding:11px; border-radius:2px; cursor:pointer; }
+.btn-save:hover { background:var(--accent); }
+.btn-cancel { flex:0 0 auto; background:none; border:1px solid var(--border); color:var(--muted); font-family:'Noto Sans KR',sans-serif; font-size:13px; padding:11px 18px; border-radius:2px; cursor:pointer; }
+
+.empty { padding:50px 20px; text-align:center; color:var(--muted); font-size:13px; }
+.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(60px); background:var(--text); color:#f8f5f0; padding:10px 22px; border-radius:2px; font-size:13px; transition:transform .3s; z-index:999; pointer-events:none; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+@media(max-width:600px) {
+  .grid3 { grid-template-columns:1fr 1fr; }
+  .form-grid { grid-template-columns:1fr; }
+  .pay-item-row { grid-template-columns:1fr 100px auto; }
+  .pay-item-row input:nth-child(3) { display:none; }
+  .people-grid { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-sub">Wedding · 2026.06.27</div>
+  <h1>청 모 기 록</h1>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showTab('summary',this)">요약</button>
+  <button class="nav-btn" onclick="showTab('list',this)">모임 목록</button>
+  <button class="nav-btn" onclick="showTab('people',this)">인원 관리</button>
+  <button class="nav-btn" onclick="showTab('add',this)">+ 추가</button>
+</nav>
+
+<div class="container">
+
+  <!-- SUMMARY -->
+  <div class="section active" id="tab-summary">
+    <div class="grid3">
+      <div class="card"><div class="card-label">총 지출</div><div class="card-value accent" id="s-total">0</div><div class="card-sub">원</div></div>
+      <div class="card"><div class="card-label">모임 횟수</div><div class="card-value" id="s-count">0</div><div class="card-sub">회</div></div>
+      <div class="card"><div class="card-label">은선 참석</div><div class="card-value" id="s-attend">0</div><div class="card-sub">회</div></div>
+    </div>
+    <div class="grid3">
+      <div class="card"><div class="card-label">참석 시 지출</div><div class="card-value" id="s-amt-o">0</div><div class="card-sub">원</div></div>
+      <div class="card"><div class="card-label">미참석 시 지출</div><div class="card-value" id="s-amt-x">0</div><div class="card-sub">원</div></div>
+      <div class="card"><div class="card-label">평균 지출/회</div><div class="card-value" id="s-avg">0</div><div class="card-sub">원</div></div>
+    </div>
+    <div class="section-title" style="margin-top:16px">최근 모임</div>
+    <div id="recentList"></div>
+  </div>
+
+  <!-- LIST -->
+  <div class="section" id="tab-list">
+    <div class="totals-bar">
+      <div class="tb-item"><div class="lbl">총 지출</div><div class="val" id="lt-total">—</div></div>
+      <div class="tb-item"><div class="lbl">모임 수</div><div class="val" id="lt-count">—</div></div>
+      <div class="tb-item"><div class="lbl">은선 참석</div><div class="val" id="lt-attend">—</div></div>
+    </div>
+    <div class="toolbar" id="listFilterBar">
+      <button class="filter-btn active" onclick="setListFilter('all',this)">전체</button>
+      <button class="filter-btn" onclick="setListFilter('O',this)">은선 참석</button>
+      <button class="filter-btn" onclick="setListFilter('X',this)">은선 미참석</button>
+      <button class="filter-btn" onclick="setListFilter('amt',this)">금액 있는것만</button>
+    </div>
+    <div class="toolbar" id="peopleFilterBar" style="margin-top:-8px"></div>
+    <div id="meetingList"></div>
+    <div class="empty" id="listEmpty" style="display:none">해당하는 내역이 없습니다</div>
+  </div>
+
+  <!-- PEOPLE -->
+  <div class="section" id="tab-people">
+    <div id="peopleMain">
+      <div class="add-person-form">
+        <input type="text" id="p-name" placeholder="이름">
+        <input type="text" id="p-group" placeholder="소속 / 관계 (예: 건국대, 셀)">
+        <button class="btn-add-person" onclick="addPerson()">추가</button>
+      </div>
+      <div class="people-grid" id="peopleGrid"></div>
+    </div>
+    <!-- 개인 상세 -->
+    <div id="personDetail" style="display:none">
+      <div class="person-detail-header">
+        <div>
+          <div style="font-size:18px;font-weight:500" id="pd-name">—</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px" id="pd-group">—</div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:center">
+          <div style="text-align:center">
+            <div style="font-family:'Noto Serif KR',serif;font-size:22px;color:var(--accent)" id="pd-count">0</div>
+            <div style="font-size:10px;color:var(--muted)">모임 횟수</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:'Noto Serif KR',serif;font-size:22px;color:var(--accent)" id="pd-amt">0</div>
+            <div style="font-size:10px;color:var(--muted)">총 지출</div>
+          </div>
+          <button class="btn-back" onclick="closePersonDetail()">← 목록</button>
+        </div>
+      </div>
+      <div id="pd-meetings"></div>
+    </div>
+  </div>
+
+  <!-- ADD -->
+  <div class="section" id="tab-add">
+    <div class="form-card">
+      <div class="form-title">새 모임 추가</div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>날짜 *</label>
+          <input type="date" id="f-date">
+        </div>
+        <div class="form-field">
+          <label>은선 참석 *</label>
+          <div class="yn-toggle">
+            <button type="button" class="yn-btn" id="btn-o" onclick="setYN('O')">O 참석</button>
+            <button type="button" class="yn-btn" id="btn-x" onclick="setYN('X')">X 미참석</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label>참석자 *</label>
+        <div class="people-select-wrap">
+          <div class="people-checkboxes" id="f-checkboxes"></div>
+          <input type="text" class="extra-people-input" id="f-extra" placeholder="목록에 없는 사람 (예: 현지씨, 기타)">
+        </div>
+      </div>
+
+      <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">결제 내역</div>
+      <div class="pay-items" id="f-payItems"></div>
+      <button type="button" class="btn-add-pay" onclick="addPayItem('f-payItems','pi')">+ 결제 항목 추가</button>
+      <button class="btn-submit" onclick="addMeeting()">추가하기</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- EDIT MODAL -->
+<div class="modal-backdrop" id="editModal">
+  <div class="modal">
+    <div class="modal-title">
+      <span>모임 수정</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <input type="hidden" id="m-id">
+    <div class="form-grid">
+      <div class="form-field">
+        <label>날짜</label>
+        <input type="date" id="m-date">
+      </div>
+      <div class="form-field">
+        <label>은선 참석</label>
+        <div class="yn-toggle">
+          <button type="button" class="yn-btn" id="m-btn-o" onclick="setModalYN('O')">O 참석</button>
+          <button type="button" class="yn-btn" id="m-btn-x" onclick="setModalYN('X')">X 미참석</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-field">
+      <label>참석자 (등록된 인원)</label>
+      <div class="people-select-wrap">
+        <div class="people-checkboxes" id="m-checkboxes"></div>
+        <input type="text" class="extra-people-input" id="m-extra" placeholder="목록에 없는 사람">
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">결제 내역</div>
+    <div class="pay-items" id="m-payItems"></div>
+    <button type="button" class="btn-add-pay" onclick="addPayItem('m-payItems','mpi')">+ 결제 항목 추가</button>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">취소</button>
+      <button class="btn-save" onclick="saveEdit()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+// people: [{id, name, group}]
+// meetings: [{id, date, personIds:[], extraPeople:'', yn, payments:[{place,amount,memo}]}]
+let people = [];
+let meetings = [];
+let curYN = '', modalYN = '', curListFilter = 'all', payCounter = 0;
+
+const SEED_PEOPLE = [
+  {name:'최강식', group:'건국대'}, {name:'김도형', group:'건국대'},
+  {name:'이학준', group:'건국대'}, {name:'박경준', group:'노경기획'},
+  {name:'박형두', group:'25기'}, {name:'김선재', group:'25기'},
+  {name:'백구름', group:'25기'}, {name:'홍지수', group:'25기'},
+  {name:'정원보', group:'신촌교회'}, {name:'이신우', group:'비알'},
+  {name:'권희범', group:'전 유플'}, {name:'송승호', group:'친구'},
+];
+const SEED_MEETINGS = [
+  { date:'2026-03-20', personIds:[0,1,2], extraPeople:'', yn:'X',
+    payments:[{place:'만선항조개집 숙대입구점',amount:147000,memo:''},{place:'롯데슈퍼 원효로점',amount:34300,memo:''}]},
+  { date:'2026-04-16', personIds:[3], extraPeople:'현지씨', yn:'O',
+    payments:[{place:'고청담 용산점',amount:487000,memo:'상품권 300000'}]},
+  { date:'2026-04-21', personIds:[8], extraPeople:'', yn:'O',
+    payments:[{place:'신류 용산점',amount:0,memo:''}]},
+  { date:'2026-04-24', personIds:[4,5,6,7], extraPeople:'', yn:'X', payments:[]},
+  { date:'2026-04-27', personIds:[], extraPeople:'은선이 친구분들', yn:'O',
+    payments:[{place:'돕한',amount:0,memo:''}]},
+  { date:'2026-04-28', personIds:[9,10], extraPeople:'', yn:'X',
+    payments:[{place:'남해바다',amount:0,memo:''}]},
+  { date:'2026-04-30', personIds:[11], extraPeople:'', yn:'X',
+    payments:[{place:'쿠마 여의도점',amount:0,memo:''}]},
+];
+
+function load() {
+  const sp = localStorage.getItem('cm_people_v1');
+  const sm = localStorage.getItem('cm_meetings_v1');
+  if (sp && sm) { people=JSON.parse(sp); meetings=JSON.parse(sm); return; }
+  let pid=1, mid=1;
+  people = SEED_PEOPLE.map(p=>({...p, id:pid++}));
+  meetings = SEED_MEETINGS.map(m=>({...m, id:mid++,
+    personIds: m.personIds.map(i=>people[i].id)
+  }));
+  savePeople(); saveMeetings();
+}
+function savePeople() { localStorage.setItem('cm_people_v1', JSON.stringify(people)); }
+function saveMeetings() { localStorage.setItem('cm_meetings_v1', JSON.stringify(meetings)); }
+function totalAmt(m) { return (m.payments||[]).reduce((s,p)=>s+(p.amount||0),0); }
+function fmtDate(d) { return d?d.slice(2).replace(/-/g,'.'):'—'; }
+function fmt(n) { return n?n.toLocaleString('ko-KR'):'0'; }
+function ynBadge(yn) { return yn==='O'?'<span class="yn-o">O</span>':'<span class="yn-x">X</span>'; }
+function getPersonName(id) { return people.find(p=>p.id===id)?.name||'?'; }
+
+function showTab(name, btn) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if (name==='summary') renderSummary();
+  if (name==='list') renderList();
+  if (name==='people') renderPeople();
+  if (name==='add') renderAddCheckboxes('f-checkboxes', []);
+}
+
+function toast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+function setYN(v) {
+  curYN=v;
+  document.getElementById('btn-o').className='yn-btn'+(v==='O'?' active-o':'');
+  document.getElementById('btn-x').className='yn-btn'+(v==='X'?' active-x':'');
+}
+function setModalYN(v) {
+  modalYN=v;
+  document.getElementById('m-btn-o').className='yn-btn'+(v==='O'?' active-o':'');
+  document.getElementById('m-btn-x').className='yn-btn'+(v==='X'?' active-x':'');
+}
+
+// ── CHECKBOXES ──
+function renderAddCheckboxes(containerId, selectedIds) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  wrap.innerHTML = people.map(p=>`
+    <label class="person-check-label ${selectedIds.includes(p.id)?'checked':''}" id="lbl-${containerId}-${p.id}" onclick="toggleCheck('${containerId}',${p.id})">
+      ${p.name}<span style="font-size:10px;color:var(--muted);margin-left:3px">${p.group}</span>
+    </label>`).join('');
+}
+function toggleCheck(containerId, pid) {
+  const lbl = document.getElementById('lbl-'+containerId+'-'+pid);
+  lbl.classList.toggle('checked');
+}
+function getCheckedIds(containerId) {
+  return people.filter(p=>document.getElementById('lbl-'+containerId+'-'+p.id)?.classList.contains('checked')).map(p=>p.id);
+}
+
+// ── PAY ITEMS ──
+function addPayItem(containerId, prefix, place='', amount='', memo='') {
+  const id = ++payCounter;
+  const div = document.createElement('div');
+  div.className='pay-item-row'; div.id=prefix+'-row-'+id;
+  div.innerHTML=`
+    <input type="text" placeholder="장소" id="${prefix}-place-${id}" value="${place}">
+    <input type="number" placeholder="금액(원)" id="${prefix}-amt-${id}" value="${amount||''}">
+    <input type="text" placeholder="비고" id="${prefix}-memo-${id}" value="${memo}">
+    <button class="btn-del-row" onclick="document.getElementById('${prefix}-row-${id}').remove()">×</button>`;
+  document.getElementById(containerId).appendChild(div);
+}
+function getPayItems(containerId, prefix) {
+  const items=[];
+  document.getElementById(containerId).querySelectorAll('.pay-item-row').forEach(row=>{
+    const id=row.id.replace(prefix+'-row-','');
+    const place=document.getElementById(prefix+'-place-'+id)?.value.trim()||'';
+    const amount=parseFloat(document.getElementById(prefix+'-amt-'+id)?.value)||0;
+    const memo=document.getElementById(prefix+'-memo-'+id)?.value.trim()||'';
+    if (place||amount) items.push({place,amount,memo});
+  });
+  return items;
+}
+
+// ── MEETING CARD ──
+function renderMeetingCard(m, isRecent=false) {
+  const total=totalAmt(m);
+  const names=m.personIds.map(id=>getPersonName(id));
+  const extras=m.extraPeople?m.extraPeople.split(/[,，]/).map(s=>s.trim()).filter(Boolean):[];
+  const allNames=[...names,...extras];
+  const tagHtml = allNames.map((n,i)=>`<span class="person-tag${i>=names.length?' extra':''}">${n}</span>`).join('');
+  const payHtml=(m.payments||[]).filter(p=>p.place||p.amount).map(p=>`
+    <div class="payment-row">
+      <span class="payment-place">${p.place||'—'}</span>
+      ${p.memo?`<span class="payment-memo">${p.memo}</span>`:''}
+      <span class="payment-amt">${p.amount?p.amount.toLocaleString()+'원':'—'}</span>
+    </div>`).join('');
+  return `<div class="meeting-card" onclick="openEdit(${m.id})">
+    <div class="meeting-header">
+      <div class="meeting-left">
+        <div class="meeting-date">${fmtDate(m.date)}</div>
+        <div class="people-tags" style="margin-bottom:2px">${tagHtml||'<span class="person-tag extra">참석자 없음</span>'}</div>
+      </div>
+      <div class="meeting-right">
+        ${total?`<div class="meeting-total">${total.toLocaleString()}원</div>`:''}
+        ${ynBadge(m.yn)}
+        ${!isRecent?`<button class="btn-del-sm" onclick="event.stopPropagation();delMeeting(${m.id})">삭제</button>`:''}
+      </div>
+    </div>
+    ${payHtml?`<div class="payment-list">${payHtml}</div>`:''}
+  </div>`;
+}
+
+// ── SUMMARY ──
+function renderSummary() {
+  const total=meetings.reduce((s,m)=>s+totalAmt(m),0);
+  const O=meetings.filter(m=>m.yn==='O'), X=meetings.filter(m=>m.yn==='X');
+  const amtO=O.reduce((s,m)=>s+totalAmt(m),0), amtX=X.reduce((s,m)=>s+totalAmt(m),0);
+  const withAmt=meetings.filter(m=>totalAmt(m)>0);
+  const avg=withAmt.length?Math.round(total/withAmt.length):0;
+  document.getElementById('s-total').textContent=total.toLocaleString();
+  document.getElementById('s-count').textContent=meetings.length;
+  document.getElementById('s-attend').textContent=O.length;
+  document.getElementById('s-amt-o').textContent=amtO.toLocaleString();
+  document.getElementById('s-amt-x').textContent=amtX.toLocaleString();
+  document.getElementById('s-avg').textContent=avg.toLocaleString();
+  const sorted=[...meetings].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+  document.getElementById('recentList').innerHTML=sorted.map(m=>renderMeetingCard(m,true)).join('');
+}
+
+// ── LIST ──
+let curPersonFilter = null; // null = 전체, pid = 특정 인원
+
+function renderPeopleFilterBar() {
+  const bar = document.getElementById('peopleFilterBar');
+  if (!bar) return;
+  bar.innerHTML = people.map(p =>
+    `<button class="filter-btn${curPersonFilter===p.id?' active':''}" onclick="setPersonFilter(${p.id},this)">${p.name}</button>`
+  ).join('');
+}
+
+function setPersonFilter(pid, btn) {
+  if (curPersonFilter === pid) {
+    curPersonFilter = null;
+  } else {
+    curPersonFilter = pid;
+  }
+  renderPeopleFilterBar();
+  renderList();
+}
+
+function setListFilter(f,btn) {
+  curListFilter=f;
+  document.querySelectorAll('#listFilterBar .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+function renderList() {
+  renderPeopleFilterBar();
+  const total=meetings.reduce((s,m)=>s+totalAmt(m),0);
+  const attendO=meetings.filter(m=>m.yn==='O').length;
+  document.getElementById('lt-total').textContent=total.toLocaleString()+' 원';
+  document.getElementById('lt-count').textContent=meetings.length+' 회';
+  document.getElementById('lt-attend').textContent=attendO+' 회';
+  let f=meetings;
+  if (curListFilter==='O') f=f.filter(m=>m.yn==='O');
+  else if (curListFilter==='X') f=f.filter(m=>m.yn==='X');
+  else if (curListFilter==='amt') f=f.filter(m=>totalAmt(m)>0);
+  if (curPersonFilter !== null) f=f.filter(m=>(m.personIds||[]).includes(curPersonFilter));
+  const sorted=[...f].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const em=document.getElementById('listEmpty'), list=document.getElementById('meetingList');
+  if (!sorted.length) { list.innerHTML=''; em.style.display='block'; return; }
+  em.style.display='none';
+  list.innerHTML=sorted.map(m=>renderMeetingCard(m)).join('');
+}
+
+// ── PEOPLE ──
+function renderPeople() {
+  document.getElementById('peopleMain').style.display='block';
+  document.getElementById('personDetail').style.display='none';
+  const grid=document.getElementById('peopleGrid');
+  if (!people.length) { grid.innerHTML='<div class="empty">등록된 인원이 없습니다</div>'; return; }
+  grid.innerHTML=people.map(p=>{
+    const myMeetings=meetings.filter(m=>m.personIds.includes(p.id));
+    const myAmt=myMeetings.reduce((s,m)=>s+totalAmt(m),0);
+    return `<div class="person-card" onclick="openPersonDetail(${p.id})">
+      <button class="person-del-btn" onclick="event.stopPropagation();delPerson(${p.id})">×</button>
+      <div class="person-name-big">${p.name}</div>
+      <div class="person-group">${p.group||'—'}</div>
+      <div class="person-stats">
+        <div class="person-stat"><strong>${myMeetings.length}</strong>회</div>
+        <div class="person-stat"><strong>${myAmt?myAmt.toLocaleString():'0'}</strong>원</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openPersonDetail(pid) {
+  const p=people.find(x=>x.id===pid);
+  if (!p) return;
+  const myMeetings=meetings.filter(m=>m.personIds.includes(pid)).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const myAmt=myMeetings.reduce((s,m)=>s+totalAmt(m),0);
+  document.getElementById('pd-name').textContent=p.name;
+  document.getElementById('pd-group').textContent=p.group||'';
+  document.getElementById('pd-count').textContent=myMeetings.length;
+  document.getElementById('pd-amt').textContent=myAmt.toLocaleString()+'원';
+  document.getElementById('pd-meetings').innerHTML=myMeetings.length
+    ?myMeetings.map(m=>renderMeetingCard(m,true)).join('')
+    :'<div class="empty">모임 기록이 없습니다</div>';
+  document.getElementById('peopleMain').style.display='none';
+  document.getElementById('personDetail').style.display='block';
+}
+function closePersonDetail() {
+  document.getElementById('peopleMain').style.display='block';
+  document.getElementById('personDetail').style.display='none';
+}
+
+function addPerson() {
+  const name=document.getElementById('p-name').value.trim();
+  const group=document.getElementById('p-group').value.trim();
+  if (!name) { toast('이름을 입력해주세요'); return; }
+  const maxId=people.length?Math.max(...people.map(p=>p.id)):0;
+  people.push({id:maxId+1, name, group});
+  savePeople();
+  document.getElementById('p-name').value='';
+  document.getElementById('p-group').value='';
+  renderPeople();
+  toast('✓ 추가되었습니다');
+}
+
+function delPerson(pid) {
+  if (!confirm('삭제하시겠습니까? 해당 인원이 포함된 모임 기록에서도 제거됩니다.')) return;
+  people=people.filter(p=>p.id!==pid);
+  meetings=meetings.map(m=>({...m, personIds:m.personIds.filter(id=>id!==pid)}));
+  savePeople(); saveMeetings(); renderPeople();
+  toast('삭제되었습니다');
+}
+
+// ── ADD MEETING ──
+function addMeeting() {
+  const date=document.getElementById('f-date').value;
+  if (!date) { toast('날짜를 입력해주세요'); return; }
+  if (!curYN) { toast('은선 참석 여부를 선택해주세요'); return; }
+  const personIds=getCheckedIds('f-checkboxes');
+  const extraPeople=document.getElementById('f-extra').value.trim();
+  if (!personIds.length && !extraPeople) { toast('참석자를 선택하거나 입력해주세요'); return; }
+  const payments=getPayItems('f-payItems','pi');
+  const maxId=meetings.length?Math.max(...meetings.map(m=>m.id)):0;
+  meetings.push({id:maxId+1, date, personIds, extraPeople, yn:curYN, payments});
+  saveMeetings();
+  document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('f-extra').value='';
+  document.getElementById('f-payItems').innerHTML='';
+  curYN=''; document.getElementById('btn-o').className='yn-btn'; document.getElementById('btn-x').className='yn-btn';
+  renderAddCheckboxes('f-checkboxes',[]);
+  const listBtn=document.querySelector('.nav-btn:nth-child(2)');
+  showTab('list',listBtn);
+  toast('✓ 추가되었습니다');
+}
+
+function delMeeting(id) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  meetings=meetings.filter(m=>m.id!==id);
+  saveMeetings(); renderList(); renderSummary();
+  toast('삭제되었습니다');
+}
+
+// ── EDIT MODAL ──
+function openEdit(id) {
+  const m=meetings.find(x=>x.id===id);
+  if (!m) return;
+  document.getElementById('m-id').value=id;
+  document.getElementById('m-date').value=m.date||'';
+  document.getElementById('m-extra').value=m.extraPeople||'';
+  modalYN=m.yn||''; setModalYN(modalYN);
+  renderAddCheckboxes('m-checkboxes', m.personIds||[]);
+  document.getElementById('m-payItems').innerHTML='';
+  (m.payments||[]).forEach(p=>addPayItem('m-payItems','mpi',p.place,p.amount,p.memo));
+  if (!(m.payments||[]).length) addPayItem('m-payItems','mpi');
+  document.getElementById('editModal').classList.add('open');
+}
+function closeModal() { document.getElementById('editModal').classList.remove('open'); }
+function saveEdit() {
+  const id=parseInt(document.getElementById('m-id').value);
+  const idx=meetings.findIndex(m=>m.id===id);
+  if (idx===-1) return;
+  meetings[idx]={...meetings[idx],
+    date:document.getElementById('m-date').value,
+    personIds:getCheckedIds('m-checkboxes'),
+    extraPeople:document.getElementById('m-extra').value.trim(),
+    yn:modalYN,
+    payments:getPayItems('m-payItems','mpi'),
+  };
+  saveMeetings(); closeModal(); renderList(); renderSummary();
+  toast('✓ 수정되었습니다');
+}
+document.getElementById('editModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+// ── INIT ──
+document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+load();
+renderSummary();
+</script>
+</body>
+</html>
