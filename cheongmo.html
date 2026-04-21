@@ -651,7 +651,8 @@ function renderMeetingCard(m, isRecent=false) {
   const names=(m.personFbKeys||[]).map(k=>getPersonName(k));
   const extras=m.extraPeople?m.extraPeople.split(/[,，]/).map(s=>s.trim()).filter(Boolean):[];
   const allNames=[...names,...extras];
-  const avg=(total&&allNames.length)?Math.round(total/allNames.length):0;
+  const extraCount = m.yn==='O' ? 2 : 1;
+  const avg=(total&&allNames.length)?Math.round(total/(allNames.length+extraCount)):0;
   const today=new Date(); today.setHours(0,0,0,0);
   const mDate=m.date?new Date(m.date):null;
   const doneBadge=mDate
