@@ -399,9 +399,9 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
   </div>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, push, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
 
 const firebaseConfig = {
   apiKey: "AIzaSyBguh9YtojXmnpE0kR0EmqDPyvzzosMDGE",
@@ -413,10 +413,10 @@ const firebaseConfig = {
   appId: "1:900351174307:web:24b6401ee5794ee1f14116"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const meetingsRef = ref(db, 'cheongmo_meetings');
-const peopleRef = ref(db, 'cheongmo_people');
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const meetingsRef = db.ref('cheongmo_meetings');
+const peopleRef   = db.ref('cheongmo_people');
 
 // ── STATE ──
 let meetings = [];
@@ -471,19 +471,17 @@ function setStatus(ok) {
   el.style.color = ok ? '#2ecc71' : '#888';
 }
 
-onValue(peopleRef, snap => {
+peopleRef.on('value', snap => {
   const data = snap.val();
   if (data) {
     people = Object.entries(data).map(([fbKey,p])=>({...p,fbKey}));
   } else {
-    // seed people
-    SEED_PEOPLE.forEach(p => push(peopleRef, p));
+    SEED_PEOPLE.forEach(p => peopleRef.push(p));
   }
-  renderAddCheckboxes('f-checkboxes',[]);
   renderPeople();
 }, err => { setStatus(false); console.error(err); });
 
-onValue(meetingsRef, snap => {
+meetingsRef.on('value', snap => {
   const data = snap.val();
   meetings = data ? Object.entries(data).map(([fbKey,m])=>({...m,fbKey})) : [];
   setStatus(true);
@@ -491,11 +489,11 @@ onValue(meetingsRef, snap => {
   renderList();
 }, err => { setStatus(false); });
 
-function fbAddMeeting(item) { push(meetingsRef, item); }
-function fbUpdateMeeting(fbKey, item) { update(ref(db,'cheongmo_meetings/'+fbKey), item); }
-function fbRemoveMeeting(fbKey) { remove(ref(db,'cheongmo_meetings/'+fbKey)); }
-function fbAddPerson(item) { push(peopleRef, item); }
-function fbRemovePerson(fbKey) { remove(ref(db,'cheongmo_people/'+fbKey)); }
+function fbAddMeeting(item)         { meetingsRef.push(item); }
+function fbUpdateMeeting(fbKey, item){ db.ref('cheongmo_meetings/'+fbKey).update(item); }
+function fbRemoveMeeting(fbKey)      { db.ref('cheongmo_meetings/'+fbKey).remove(); }
+function fbAddPerson(item)           { peopleRef.push(item); }
+function fbRemovePerson(fbKey)       { db.ref('cheongmo_people/'+fbKey).remove(); }
 
 // ── HELPERS ──
 function totalAmt(m) { return (m.payments||[]).reduce((s,p)=>s+(p.amount||0),0); }
