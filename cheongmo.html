@@ -227,7 +227,7 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
     <div class="grid3">
       <div class="card"><div class="card-label">총 지출</div><div class="card-value accent" id="s-total">—</div><div class="card-sub">원</div></div>
       <div class="card"><div class="card-label">모임 횟수</div><div class="card-value" id="s-count">—</div><div class="card-sub">회</div></div>
-      <div class="card"><div class="card-label">은선 참석</div><div class="card-value" id="s-attend">—</div><div class="card-sub">회</div></div>
+      <div class="card"><div class="card-label">양쪽 참석</div><div class="card-value" id="s-attend">—</div><div class="card-sub">회</div></div>
     </div>
     <div class="person-summary-grid">
       <div class="person-summary-card mj">
@@ -250,14 +250,14 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
     <div class="totals-bar">
       <div class="tb-item"><div class="lbl">총 지출</div><div class="val" id="lt-total">—</div></div>
       <div class="tb-item"><div class="lbl">모임 수</div><div class="val" id="lt-count">—</div></div>
-      <div class="tb-item"><div class="lbl">은선 참석</div><div class="val" id="lt-attend">—</div></div>
+      <div class="tb-item"><div class="lbl">양쪽 참석</div><div class="val" id="lt-attend">—</div></div>
     </div>
     <div class="toolbar">
       <button class="filter-btn active" onclick="setListFilter('all',this)">전체</button>
       <button class="filter-btn" onclick="setListFilter('mj',this)">👨 민주</button>
       <button class="filter-btn" onclick="setListFilter('es',this)">👩 은선</button>
-      <button class="filter-btn" onclick="setListFilter('O',this)">은선 참석</button>
-      <button class="filter-btn" onclick="setListFilter('X',this)">은선 미참석</button>
+      <button class="filter-btn" onclick="setListFilter('O',this)">양쪽 참석</button>
+      <button class="filter-btn" onclick="setListFilter('X',this)">양쪽 미참석</button>
     </div>
     <div id="meetingList"></div>
     <div class="empty" id="listEmpty" style="display:none">해당하는 내역이 없습니다</div>
@@ -320,10 +320,10 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
         </div>
       </div>
       <div class="form-field">
-        <label>은선 참석 *</label>
+        <label>양쪽 참석 *</label>
         <div class="yn-toggle">
-          <button type="button" class="yn-btn" id="btn-o" onclick="setYN('O')">O 참석</button>
-          <button type="button" class="yn-btn" id="btn-x" onclick="setYN('X')">X 미참석</button>
+          <button type="button" class="yn-btn" id="btn-o" onclick="setYN('O')">양쪽 참석</button>
+          <button type="button" class="yn-btn" id="btn-x" onclick="setYN('X')">양쪽 미참석</button>
         </div>
       </div>
       <div class="form-field">
@@ -365,10 +365,10 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
       </div>
     </div>
     <div class="form-field">
-      <label>은선 참석</label>
+      <label>양쪽 참석</label>
       <div class="yn-toggle">
-        <button type="button" class="yn-btn" id="m-btn-o" onclick="setModalYN('O')">O 참석</button>
-        <button type="button" class="yn-btn" id="m-btn-x" onclick="setModalYN('X')">X 미참석</button>
+        <button type="button" class="yn-btn" id="m-btn-o" onclick="setModalYN('O')">양쪽 참석</button>
+        <button type="button" class="yn-btn" id="m-btn-x" onclick="setModalYN('X')">양쪽 미참석</button>
       </div>
     </div>
     <div class="form-field">
@@ -430,6 +430,27 @@ const SEED_PEOPLE = [
   {name:'이운현',group:'신정중'},{name:'정두혁',group:'신정중'},{name:'최정현',group:'신정중'},
   {name:'조민욱',group:'제니엘'},{name:'이성세',group:'비알'},{name:'이신우',group:'비알'},
   {name:'권희범',group:'전 유플'},{name:'전영식',group:'전 유플'},{name:'김호진',group:'엘지'},
+  // 은선
+  {name:'김은지',group:'친구'},{name:'박혜인',group:'친구'},{name:'박주희',group:'친구'},
+  {name:'정다운',group:'친구'},{name:'권다은',group:'친구'},{name:'박영애',group:'친구'},
+  {name:'최민주',group:'친구'},{name:'주혜경',group:'친구'},
+  {name:'강지화',group:'교육동기'},{name:'이충희',group:'교육동기'},
+  {name:'박선우',group:'입사동기'},{name:'오정호',group:'입사동기'},{name:'맹희진',group:'입사동기'},
+  {name:'전정란',group:'입사동기'},{name:'박아름',group:'입사동기'},{name:'이자영',group:'입사동기'},
+  {name:'오산나',group:'입사동기'},{name:'윤현주',group:'입사동기'},{name:'김지윤',group:'입사동기'},
+  {name:'구영선',group:'입사동기'},{name:'강수정',group:'입사동기'},
+  {name:'왕수용',group:'왕수용순'},{name:'박유진',group:'박유진순'},{name:'심영우',group:'박유진순'},
+  {name:'이지혜',group:'박유진순'},{name:'미코',group:'박유진순'},{name:'이민희',group:'박유진순'},
+  {name:'안도원',group:'안도원순'},{name:'김관호',group:'안도원순'},{name:'박보미',group:'안도원순'},
+  {name:'박지혜계장님',group:'공항동'},{name:'정영주',group:'생활보장과'},
+  {name:'박은희팀장님',group:'복지지원과'},{name:'김신혜',group:'우장산동'},
+  {name:'김미혜',group:'아동청소년과'},{name:'이덕순팀장님',group:'방화1동'},
+  {name:'이은정',group:'염창동'},{name:'이정희과장님',group:'생활보장과'},
+  {name:'오윤이',group:'가양2동'},{name:'김충호',group:'등촌2동'},
+  {name:'윤서연',group:'휴직자'},{name:'강정원',group:'복지지원과'},
+  {name:'김민지',group:'어르신복지과'},{name:'권한나',group:'생활보장과'},
+  {name:'이윤나',group:'생활보장과'},{name:'이여름',group:'아동청소년과'},
+  {name:'김신보',group:'휴직자'},{name:'김남식국장님',group:'퇴직자'},{name:'최숙영',group:'퇴직자'},
 ];
 
 // ── FIREBASE ──
@@ -582,7 +603,7 @@ function renderMeetingCard(m, isRecent=false) {
     ?(mDate<today?'<span class="badge-done">진행</span>':'<span class="badge-upcoming">미진행</span>')
     :'<span class="badge-upcoming">미진행</span>';
   const whoBadge=m.who==='mj'?'<span class="who-badge-mj">👨 민주</span>':'<span class="who-badge-es">👩 은선</span>';
-  const ynBadge=m.yn==='O'?'<span class="yn-o">O</span>':'<span class="yn-x">X</span>';
+  const ynBadge=m.yn==='O'?'<span class="yn-o">참석</span>':'<span class="yn-x">미참석</span>';
   const payHtml=(m.payments||[]).filter(p=>p.place||p.amount).map(p=>`
     <div class="payment-row">
       <span class="payment-place">${p.place||'—'}</span>
@@ -756,7 +777,7 @@ function addMeeting() {
   const date=document.getElementById('f-date').value;
   if (!formWho) { toast('민주/은선을 선택해주세요'); return; }
   if (!date) { toast('날짜를 입력해주세요'); return; }
-  if (!curYN) { toast('은선 참석 여부를 선택해주세요'); return; }
+  if (!curYN) { toast('양쪽 참석 여부를 선택해주세요'); return; }
   const personFbKeys=getCheckedFbKeys('f-checkboxes');
   const extraPeople=document.getElementById('f-extra').value.trim();
   const payments=getPayItems('f-payItems','pi');
