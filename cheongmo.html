@@ -156,13 +156,20 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 .yn-btn.active-o { background:#e8f5ec; border-color:var(--green); color:var(--green); font-weight:500; }
 .yn-btn.active-x { background:#f5e8e8; border-color:var(--red); color:var(--red); font-weight:500; }
 
-.people-select-wrap { background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:11px; margin-bottom:12px; }
-.people-checkboxes { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:8px; }
-.person-check-label { display:flex; align-items:center; gap:4px; cursor:pointer; font-size:12px; background:var(--surface); border:1px solid var(--border); padding:4px 11px; border-radius:20px; transition:all .2s; }
-.person-check-label input { display:none; }
-.person-check-label.checked { background:var(--accent-light); border-color:var(--accent); color:var(--accent); }
-.extra-people-input { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:8px 12px; color:var(--text); font-family:'Noto Sans KR',sans-serif; font-size:12px; outline:none; }
-.extra-people-input:focus { border-color:var(--accent); }
+/* PEOPLE SEARCH */
+.people-search-wrap { position:relative; background:var(--bg); border:1px solid var(--border); border-radius:2px; padding:10px 12px; }
+.people-search-input { width:100%; border:none; background:transparent; color:var(--text); font-family:'Noto Sans KR',sans-serif; font-size:13px; outline:none; }
+.people-search-input::placeholder { color:var(--muted); }
+.search-dropdown { display:none; position:absolute; left:0; right:0; top:100%; background:var(--surface); border:1px solid var(--border); border-top:none; border-radius:0 0 3px 3px; z-index:50; max-height:200px; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,.1); }
+.search-dropdown.open { display:block; }
+.search-item { padding:9px 14px; font-size:13px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
+.search-item:hover { background:var(--accent-light); }
+.search-item-group { font-size:11px; color:var(--muted); }
+.selected-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.selected-tag { display:flex; align-items:center; gap:4px; background:var(--accent-light); border:1px solid var(--accent); color:var(--accent); font-size:12px; padding:3px 10px; border-radius:20px; }
+.selected-tag button { background:none; border:none; color:var(--accent); font-size:14px; cursor:pointer; padding:0; line-height:1; margin-left:2px; }
+.selected-tag button:hover { color:var(--red); }
+.search-no-result { padding:9px 14px; font-size:12px; color:var(--muted); }
 
 .pay-items { display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
 .pay-item-row { display:grid; grid-template-columns:1fr 110px 90px auto; gap:8px; align-items:center; }
@@ -328,9 +335,10 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
       </div>
       <div class="form-field">
         <label>참석자</label>
-        <div class="people-select-wrap">
-          <div class="people-checkboxes" id="f-checkboxes"></div>
-          <input type="text" class="extra-people-input" id="f-extra" placeholder="목록에 없는 사람 (예: 현지씨)">
+        <div class="people-search-wrap" id="f-search-wrap">
+          <input type="text" class="people-search-input" id="f-search" placeholder="이름 검색..." oninput="searchPeople('f')" autocomplete="off">
+          <div class="search-dropdown" id="f-dropdown"></div>
+          <div class="selected-tags" id="f-tags"></div>
         </div>
       </div>
       <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">결제 내역</div>
@@ -373,9 +381,10 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
     </div>
     <div class="form-field">
       <label>참석자</label>
-      <div class="people-select-wrap">
-        <div class="people-checkboxes" id="m-checkboxes"></div>
-        <input type="text" class="extra-people-input" id="m-extra" placeholder="목록에 없는 사람">
+      <div class="people-search-wrap" id="m-search-wrap">
+        <input type="text" class="people-search-input" id="m-search" placeholder="이름 검색..." oninput="searchPeople('m')" autocomplete="off">
+        <div class="search-dropdown" id="m-dropdown"></div>
+        <div class="selected-tags" id="m-tags"></div>
       </div>
     </div>
     <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">결제 내역</div>
@@ -506,7 +515,7 @@ function showTab(name, btn) {
   if (name==='list') renderList();
   if (name==='calendar') renderCalendar();
   if (name==='people') renderPeople();
-  if (name==='add') renderAddCheckboxes('f-checkboxes',[]);
+  if (name==='add') { resetSearch('f'); }
 }
 window.showTab = showTab;
 
@@ -547,23 +556,68 @@ function setSumFilter(v) {
 }
 window.setSumFilter = setSumFilter;
 
-// ── CHECKBOXES ──
-function renderAddCheckboxes(containerId, selectedFbKeys) {
-  const wrap=document.getElementById(containerId);
-  if (!wrap) return;
-  wrap.innerHTML=people.map(p=>`
-    <label class="person-check-label ${selectedFbKeys.includes(p.fbKey)?'checked':''}" id="lbl-${containerId}-${p.fbKey}" onclick="toggleCheck('${containerId}','${p.fbKey}')">
-      ${p.name}<span style="font-size:10px;color:var(--muted);margin-left:3px">${p.group}</span>
-    </label>`).join('');
+// ── PEOPLE SEARCH SELECTION ──
+const selectedFbKeys = { f: [], m: [] };
+
+function searchPeople(prefix) {
+  const q = document.getElementById(prefix+'-search').value.trim().toLowerCase();
+  const dd = document.getElementById(prefix+'-dropdown');
+  if (!q) { dd.classList.remove('open'); return; }
+  const results = people.filter(p =>
+    p.name.toLowerCase().includes(q) && !selectedFbKeys[prefix].includes(p.fbKey)
+  ).slice(0, 10);
+  if (!results.length) {
+    dd.innerHTML = `<div class="search-no-result">검색 결과 없음 — 엔터로 직접 추가</div>`;
+  } else {
+    dd.innerHTML = results.map(p =>
+      `<div class="search-item" onclick="selectPerson('${prefix}','${p.fbKey}')">
+        <span>${p.name}</span><span class="search-item-group">${p.group}</span>
+      </div>`
+    ).join('');
+  }
+  dd.classList.add('open');
 }
-window.renderAddCheckboxes = renderAddCheckboxes;
-function toggleCheck(containerId, fbKey) {
-  document.getElementById('lbl-'+containerId+'-'+fbKey)?.classList.toggle('checked');
+window.searchPeople = searchPeople;
+
+function selectPerson(prefix, fbKey) {
+  if (selectedFbKeys[prefix].includes(fbKey)) return;
+  selectedFbKeys[prefix].push(fbKey);
+  document.getElementById(prefix+'-search').value = '';
+  document.getElementById(prefix+'-dropdown').classList.remove('open');
+  renderSelectedTags(prefix);
 }
-window.toggleCheck = toggleCheck;
-function getCheckedFbKeys(containerId) {
-  return people.filter(p=>document.getElementById('lbl-'+containerId+'-'+p.fbKey)?.classList.contains('checked')).map(p=>p.fbKey);
+window.selectPerson = selectPerson;
+
+function removeSelected(prefix, fbKey) {
+  selectedFbKeys[prefix] = selectedFbKeys[prefix].filter(k => k !== fbKey);
+  renderSelectedTags(prefix);
 }
+window.removeSelected = removeSelected;
+
+function renderSelectedTags(prefix) {
+  const wrap = document.getElementById(prefix+'-tags');
+  wrap.innerHTML = selectedFbKeys[prefix].map(fbKey => {
+    const p = people.find(x => x.fbKey === fbKey);
+    return `<span class="selected-tag">${p?.name||'?'}<button onclick="removeSelected('${prefix}','${fbKey}')">×</button></span>`;
+  }).join('');
+}
+
+function resetSearch(prefix) {
+  selectedFbKeys[prefix] = [];
+  document.getElementById(prefix+'-search').value = '';
+  document.getElementById(prefix+'-dropdown').classList.remove('open');
+  renderSelectedTags(prefix);
+}
+
+// 검색창 외부 클릭 시 드롭다운 닫기
+document.addEventListener('click', e => {
+  ['f','m'].forEach(prefix => {
+    const wrap = document.getElementById(prefix+'-search-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById(prefix+'-dropdown')?.classList.remove('open');
+    }
+  });
+});
 
 // ── PAY ITEMS ──
 function addPayItem(containerId, prefix, place='', amount='', memo='') {
@@ -778,20 +832,20 @@ function addMeeting() {
   if (!formWho) { toast('민주/은선을 선택해주세요'); return; }
   if (!date) { toast('날짜를 입력해주세요'); return; }
   if (!curYN) { toast('양쪽 참석 여부를 선택해주세요'); return; }
-  const personFbKeys=getCheckedFbKeys('f-checkboxes');
-  const extraPeople=document.getElementById('f-extra').value.trim();
+  const personFbKeys=selectedFbKeys['f'];
+  const extraPeople=document.getElementById('f-extra')?.value.trim()||'';
   const payments=getPayItems('f-payItems','pi');
   fbAddMeeting({who:formWho, date, yn:curYN, personFbKeys, extraPeople, payments});
   // 초기화
   document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
-  document.getElementById('f-extra').value='';
+  if (document.getElementById('f-extra')) document.getElementById('f-extra').value='';
   document.getElementById('f-payItems').innerHTML='';
   curYN=''; formWho='';
   document.getElementById('btn-o').className='yn-btn';
   document.getElementById('btn-x').className='yn-btn';
   document.getElementById('f-btn-mj').className='who-select-btn';
   document.getElementById('f-btn-es').className='who-select-btn';
-  renderAddCheckboxes('f-checkboxes',[]);
+  resetSearch('f');
   const listBtn=document.querySelector('.nav-btn:nth-child(2)');
   showTab('list',listBtn);
   toast('✓ 추가되었습니다');
@@ -814,7 +868,11 @@ function openEdit(fbKey) {
   document.getElementById('m-extra').value=m.extraPeople||'';
   modalWho=m.who||''; setModalWho(modalWho);
   modalYN=m.yn||''; setModalYN(modalYN);
-  renderAddCheckboxes('m-checkboxes',m.personFbKeys||[]);
+  // 기존 선택 복원
+  selectedFbKeys['m'] = m.personFbKeys||[];
+  renderSelectedTags('m');
+  document.getElementById('m-search').value='';
+  document.getElementById('m-dropdown').classList.remove('open');
   document.getElementById('m-payItems').innerHTML='';
   (m.payments||[]).forEach(p=>addPayItem('m-payItems','mpi',p.place,p.amount,p.memo));
   if (!(m.payments||[]).length) addPayItem('m-payItems','mpi');
@@ -829,8 +887,8 @@ function saveEdit() {
     who:modalWho,
     date:document.getElementById('m-date').value,
     yn:modalYN,
-    personFbKeys:getCheckedFbKeys('m-checkboxes'),
-    extraPeople:document.getElementById('m-extra').value.trim(),
+    personFbKeys:selectedFbKeys['m'],
+    extraPeople:document.getElementById('m-extra')?.value.trim()||'',
     payments:getPayItems('m-payItems','mpi'),
   });
   closeModal();
