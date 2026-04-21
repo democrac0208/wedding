@@ -389,6 +389,7 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
         <div class="selected-tags" id="m-tags"></div>
       </div>
     </div>
+    <input type="hidden" id="m-extra">
     <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">결제 내역</div>
     <div class="pay-items" id="m-payItems"></div>
     <button type="button" class="btn-add-pay" onclick="addPayItem('m-payItems','mpi')">+ 결제 항목 추가</button>
@@ -865,7 +866,8 @@ function openEdit(fbKey) {
   if (!m) return;
   document.getElementById('m-fbkey').value=fbKey;
   document.getElementById('m-date').value=m.date||'';
-  document.getElementById('m-extra').value=m.extraPeople||'';
+  const mExtra = document.getElementById('m-extra');
+  if (mExtra) mExtra.value=m.extraPeople||'';
   modalWho=m.who||''; setModalWho(modalWho);
   modalYN=m.yn||''; setModalYN(modalYN);
   // 기존 선택 복원
