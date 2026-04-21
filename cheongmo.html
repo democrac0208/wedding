@@ -86,6 +86,8 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 .who-badge-es { display:inline-block; background:var(--es-bg); color:var(--es); font-size:10px; font-weight:500; padding:2px 8px; border-radius:10px; }
 .btn-del-sm { background:none; border:1px solid var(--border); color:var(--muted); font-size:11px; padding:3px 8px; border-radius:2px; cursor:pointer; }
 .btn-del-sm:hover { border-color:var(--red); color:var(--red); }
+.btn-edit-sm { background:none; border:1px solid var(--border); color:var(--muted); font-size:11px; padding:3px 8px; border-radius:2px; cursor:pointer; }
+.btn-edit-sm:hover { border-color:var(--accent); color:var(--accent); }
 
 .payment-list { border-top:1px solid var(--border); }
 .payment-row { display:flex; justify-content:space-between; align-items:center; padding:8px 16px; border-bottom:1px dashed var(--border); font-size:13px; background:var(--bg); }
@@ -673,7 +675,7 @@ function renderMeetingCard(m, isRecent=false) {
       <div class="meeting-right">
         <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
           ${whoBadge}${doneBadge}${ynBadge}
-          ${!isRecent?`<button class="btn-del-sm" onclick="event.stopPropagation();delMeeting('${m.fbKey}')">삭제</button>`:''}
+          ${!isRecent?`<button class="btn-edit-sm" onclick="event.stopPropagation();openEdit('${m.fbKey}')">수정</button><button class="btn-del-sm" onclick="event.stopPropagation();delMeeting('${m.fbKey}')">삭제</button>`:''}
         </div>
         ${total?`<div class="meeting-total">${total.toLocaleString()}원${avg?`<span class="meeting-avg"> · 인당 ~${avg.toLocaleString()}</span>`:''}</div>`:''}
       </div>
