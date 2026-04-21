@@ -666,7 +666,7 @@ function renderMeetingCard(m, isRecent=false) {
       ${p.memo?`<span class="payment-memo">${p.memo}</span>`:''}
       <span class="payment-amt">${p.amount?p.amount.toLocaleString()+'원':'—'}</span>
     </div>`).join('');
-  return `<div class="meeting-card ${m.who||''}" data-card-edit="${m.fbKey}">
+  return `<div class="meeting-card ${m.who||''}" onclick="if(!event.target.closest('button'))window.openEdit('${m.fbKey}')">
     <div class="meeting-header">
       <div class="meeting-left">
         <div class="meeting-date">${fmtDate(m.date)}</div>
@@ -675,7 +675,7 @@ function renderMeetingCard(m, isRecent=false) {
       <div class="meeting-right">
         <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
           ${whoBadge}${doneBadge}${ynBadge}
-          ${!isRecent?`<button class="btn-edit-sm" data-edit="${m.fbKey}">수정</button><button class="btn-del-sm" data-del="${m.fbKey}">삭제</button>`:''}
+          ${!isRecent?`<button class="btn-edit-sm" onclick="event.stopPropagation();window.openEdit('${m.fbKey}')">수정</button><button class="btn-del-sm" onclick="event.stopPropagation();window.delMeeting('${m.fbKey}')">삭제</button>`:''}
         </div>
         ${total?`<div class="meeting-total">${total.toLocaleString()}원${avg?`<span class="meeting-avg"> · 인당 ~${avg.toLocaleString()}</span>`:''}</div>`:''}
       </div>
@@ -897,17 +897,7 @@ function saveEdit() {
   toast('✓ 수정되었습니다');
 }
 window.saveEdit=saveEdit;
-document.getElementById('editModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
-
-// 이벤트 위임 — 수정/삭제/카드 클릭
-document.addEventListener('click', e => {
-  const editBtn = e.target.closest('[data-edit]');
-  const delBtn  = e.target.closest('[data-del]');
-  const cardEl  = e.target.closest('[data-card-edit]');
-  if (editBtn) { e.stopPropagation(); openEdit(editBtn.dataset.edit); return; }
-  if (delBtn)  { e.stopPropagation(); delMeeting(delBtn.dataset.del); return; }
-  if (cardEl && !e.target.closest('button')) { openEdit(cardEl.dataset.cardEdit); }
-});
+document.getElementById('editModal').addEventListener('click',function(e){if(e.target===this)window.closeModal();});
 
 document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
 </script>
